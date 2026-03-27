@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% block title %}Web3 Utilities — API Wallet{% endblock %}
+
+{% block body %}
+<style>
+body::before {
+  content: '';
+  position: fixed; top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 500px;
+  background: radial-gradient(ellipse, rgba(16,163,127,0.05) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+.app { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
+
+/* Header */
+.hdr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; height: 50px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,8,0.85);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.hdr-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 0.95rem; font-weight: 800; letter-spacing: -0.02em;
+  text-decoration: none; color: var(--text); flex-shrink: 0;
+}
+
+.hdr-logo .accent { color: var(--accent-hi); }
+
+.hdr-divider { width: 1px; height: 18px; background: var(--border); }
+
+.page-title { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+
+.hdr-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+
+.nav-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; padding: 5px 12px; border-radius: 6px;
+}
+
+.nav-btn:hover { background: var(--surface); color: var(--text); }
+.nav-btn.active { background: var(--surface-2); border-color: rgba(124,58,237,0.3); color: var(--accent-hi); }
+
+/* Content */
+.content { flex: 1; padding: 24px 20px; max-width: 900px; width: 100%; margin: 0 auto; }
+
+/* Section */
+.section { margin-bottom: 32px; }
+
+.section-title {
+  font-size: 0.7rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Lookup box */
+.lookup-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 12px;
+}
+
+.lookup-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
+
+.lookup-row { display: flex; gap: 8px; align-items: center; }
+
+.lookup-row input { flex: 1; font-family: var(--mono); font-size: 12.5px; }
+
+.lookup-results { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; }
+
+/* Explorer links grid */
+.networks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.network-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.network-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--net-color, var(--accent));
+  opacity: 0.6;
+}
+
+.network-card:hover {
+  border-color: var(--border-hi);
+  background: var(--surface-2);
+  transform: translateY(-1px);
+}
+
+.network-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.network-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.network-url { font-size: 10px; color: var(--muted-2); margin-top: 2px; }
+
+/* Explorer link buttons */
+.explorer-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 12px;
+  font-size: 12px; color: var(--muted); text-decoration: none;
+  transition: all 0.12s;
+}
+
+.explorer-link:hover {
+  background: var(--surface-2); border-color: var(--border-hi); color: var(--text);
+}
+
+.explorer-link .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--net-color, var(--accent));
+  flex-shrink: 0;
+}
+
+/* Gas tracker */
+.gas-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
+}
+
+.gas-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.gas-icon { font-size: 1.5rem; }
+
+.gas-info .gas-name { font-size: 12px; font-weight: 600; }
+.gas-info .gas-sub { font-size: 11px; color: var(--muted-2); }
+
+/* Address book */
+.addr-list { display: flex; flex-direction: column; gap: 5px; }
+
+.addr-row {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  display: grid; grid-template-columns: 160px 1fr auto;
+  align-items: center; gap: 12px;
+}
+
+.addr-label { font-size: 12px; font-weight: 600; }
+.addr-val { font-family: var(--mono); font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addr-actions { display: flex; gap: 4px; }
+
+/* Tx/address lookup results */
+.result-links { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 7px; }
+</style>
+
+<div class="app">
+  <header class="hdr">
+    <a href="/vault" class="hdr-logo">
+      <span>🔐 API <span class="accent">Wallet</span></span>
+    </a>
+    <div class="hdr-divider"></div>
+    <span class="page-title">⬡ Web3 Utilities</span>
+    <div class="hdr-right">
+      <a href="/vault"><button class="nav-btn">← Keys</button></a>
+      <form method="POST" action="/lock" style="margin:0;">
+        <button type="submit" class="nav-btn" style="color:var(--muted);">Lock</button>
+      </form>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- Address Lookup -->
+    <div class="section">
+      <div class="section-title">Address &amp; TX Lookup</div>
+      <div class="lookup-card">
+        <div class="lookup-title">Paste any address or transaction hash</div>
+        <div class="lookup-row">
+          <input type="text" id="lookupInput" placeholder="0x... or transaction hash or ENS name…" class="mono" oninput="buildLookupLinks(this.value)">
+          <button class="btn-primary" onclick="buildLookupLinks(document.getElementById('lookupInput').value)">Go</button>
+          <button class="btn-ghost" onclick="pasteFromClipboard()">Paste</button>
+        </div>
+        <div id="lookupResults" class="lookup-results"></div>
+      </div>
+    </div>
+
+    <!-- Block Explorers -->
+    <div class="section">
+      <div class="section-title">Block Explorers</div>
+      <div class="networks-grid">
+        {% for net in networks %}
+        <a href="{{ net.explorer }}" target="_blank" rel="noopener" style="text-decoration:none;">
+          <div class="network-card" style="--net-color: {{ net.color }};">
+            <div class="network-icon">{{ net.icon }}</div>
+            <div class="network-name">{{ net.name }}</div>
+            <div class="network-url">{{ net.explorer_short }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Gas & Tools -->
+    <div class="section">
+      <div class="section-title">Gas &amp; Tools</div>
+      <div class="gas-grid">
+        {% for tool in tools %}
+        <a href="{{ tool.url }}" target="_blank" rel="noopener" style="text-decoration:none;">
+          <div class="gas-card">
+            <div class="gas-icon">{{ tool.icon }}</div>
+            <div class="gas-info">
+              <div class="gas-name">{{ tool.name }}</div>
+              <div class="gas-sub">{{ tool.desc }}</div>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Address Book -->
+    <div class="section">
+      <div class="section-title">Address Book</div>
+
+      {% if addresses %}
+      <div class="addr-list" style="margin-bottom:12px;">
+        {% for a in addresses %}
+        <div class="addr-row">
+          <div class="addr-label">{{ a.label }}</div>
+          <div class="addr-val" title="{{ a.address }}">{{ a.address }}</div>
+          <div class="addr-actions">
+            <button class="btn-ghost action-btn" onclick="copyToClipboard('{{ a.address }}', this)" style="font-size:11px;">Copy</button>
+            <button class="btn-ghost action-btn" onclick="buildLookupLinks('{{ a.address }}'); document.getElementById('lookupInput').value='{{ a.address }}'; window.scrollTo(0,0);" style="font-size:11px;">Lookup</button>
+            <form method="POST" action="/web3/addr/delete" style="margin:0;" onsubmit="return confirm('Remove?')">
+              <input type="hidden" name="id" value="{{ a.id }}">
+              <button type="submit" class="btn-danger" style="font-size:11px;padding:4px 8px;">✕</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/web3/addr/add" style="display:grid;grid-template-columns:160px 1fr 120px auto;gap:8px;align-items:end;">
+        <div>
+          <label class="edit-label" style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted-2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">Label</label>
+          <input type="text" name="label" placeholder="My Wallet" required>
+        </div>
+        <div>
+          <label class="edit-label" style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted-2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">Address</label>
+          <input type="text" name="address" class="mono" placeholder="0x..." required>
+        </div>
+        <div>
+          <label class="edit-label" style="display:block;font-size:0.7rem;font-weight:600;color:var(--muted-2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;">Network</label>
+          <select name="network">
+            <option>Ethereum</option>
+            <option>Solana</option>
+            <option>Bitcoin</option>
+            <option>Polygon</option>
+            <option>Base</option>
+            <option>Arbitrum</option>
+            <option>Optimism</option>
+            <option>BSC</option>
+          </select>
+        </div>
+        <div style="padding-bottom:1px;">
+          <button type="submit" class="btn-primary" style="height:34px;padding:0 16px;">Save</button>
+        </div>
+      </form>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const EXPLORERS = {
+  eth:   { name: 'Etherscan',   url: 'https://etherscan.io',       addr: '/address/', tx: '/tx/' },
+  sol:   { name: 'Solscan',     url: 'https://solscan.io',         addr: '/account/', tx: '/tx/' },
+  poly:  { name: 'Polygonscan', url: 'https://polygonscan.com',    addr: '/address/', tx: '/tx/' },
+  base:  { name: 'Basescan',    url: 'https://basescan.org',       addr: '/address/', tx: '/tx/' },
+  arb:   { name: 'Arbiscan',    url: 'https://arbiscan.io',        addr: '/address/', tx: '/tx/' },
+  op:    { name: 'Optimistic',  url: 'https://optimistic.etherscan.io', addr: '/address/', tx: '/tx/' },
+  bsc:   { name: 'BscScan',     url: 'https://bscscan.com',        addr: '/address/', tx: '/tx/' },
+  btc:   { name: 'Mempool',     url: 'https://mempool.space',      addr: '/address/', tx: '/tx/' },
+};
+
+const COLORS = {
+  eth:'#627eea', sol:'#9945ff', poly:'#8247e5', base:'#0052ff',
+  arb:'#12aaff', op:'#ff0420', bsc:'#f0b90b', btc:'#f7931a'
+};
+
+function buildLookupLinks(val) {
+  val = val.trim();
+  const el = document.getElementById('lookupResults');
+  if (!val) { el.innerHTML = ''; return; }
+
+  const isEVMAddr = /^0x[0-9a-fA-F]{40}$/.test(val);
+  const isTxHash  = /^0x[0-9a-fA-F]{64}$/.test(val);
+  const isSolAddr = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(val) && !val.startsWith('0x');
+  const isBTCAddr = /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(val) || /^bc1[a-z0-9]{39,59}$/.test(val);
+  const isENS     = val.endsWith('.eth');
+  const isSolTx   = /^[1-9A-HJ-NP-Za-km-z]{86,88}$/.test(val);
+
+  let links = [];
+
+  if (isEVMAddr || isTxHash || isENS) {
+    const path = isTxHash ? 'tx' : 'addr';
+    const evmExplorers = ['eth','poly','base','arb','op','bsc'];
+    evmExplorers.forEach(k => {
+      const ex = EXPLORERS[k];
+      const segment = isTxHash ? ex.tx : ex.addr;
+      links.push({ name: ex.name, url: ex.url + segment + val, color: COLORS[k] });
+    });
+  }
+
+  if (isSolAddr) {
+    links.push({ name: 'Solscan (Account)', url: EXPLORERS.sol.url + EXPLORERS.sol.addr + val, color: COLORS.sol });
+    links.push({ name: 'Explorer.Solana', url: 'https://explorer.solana.com/address/' + val, color: COLORS.sol });
+  }
+
+  if (isSolTx) {
+    links.push({ name: 'Solscan (TX)', url: EXPLORERS.sol.url + EXPLORERS.sol.tx + val, color: COLORS.sol });
+  }
+
+  if (isBTCAddr) {
+    links.push({ name: 'Mempool.space', url: EXPLORERS.btc.url + EXPLORERS.btc.addr + val, color: COLORS.btc });
+    links.push({ name: 'Blockchain.com', url: 'https://www.blockchain.com/explorer/addresses/btc/' + val, color: COLORS.btc });
+  }
+
+  if (!links.length) {
+    // Try ENS lookup
+    links.push({ name: 'Etherscan Search', url: 'https://etherscan.io/search?q=' + encodeURIComponent(val), color: COLORS.eth });
+    links.push({ name: 'Solscan Search', url: 'https://solscan.io/search#' + encodeURIComponent(val), color: COLORS.sol });
+  }
+
+  el.innerHTML = links.map(l =>
+    `<a href="${l.url}" target="_blank" rel="noopener" class="explorer-link" style="--net-color:${l.color}">
+      <span class="dot"></span>${l.name} ↗
+    </a>`
+  ).join('');
+}
+
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    document.getElementById('lookupInput').value = text;
+    buildLookupLinks(text);
+  } catch(e) {
+    document.getElementById('lookupInput').focus();
+  }
+}
+
+// Handle Enter in lookup input
+document.getElementById('lookupInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buildLookupLinks(e.target.value);
+});
+</script>
+{% endblock %}

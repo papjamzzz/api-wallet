@@ -1,42 +1,61 @@
+{# Service badge color pulled from k.service dict injected by Flask #}
+{% set svc = k.service %}
+
 {# Normal display row #}
-<div class="key-row" id="row-{{ k.id }}" style="display:grid;">
-  <div class="key-name">{{ k.name }}</div>
-  <div class="key-value-wrap">
-    <input type="password" id="val-{{ k.id }}" value="{{ k.value }}" readonly class="monospace" />
+<div class="key-card" id="row-{{ k.id }}"
+     data-project="{{ k.project }}"
+     data-name="{{ k.name }}"
+     style="--svc-color: {{ svc.color }}; --svc-bg: {{ svc.bg }};">
+
+  <div class="key-card-left">
+    <div class="svc-badge" title="{{ svc.label }}">{{ svc.initials }}</div>
+    <div class="key-info">
+      <div class="key-name mono">{{ k.name }}</div>
+      {% if svc.label %}
+      <div class="key-meta">{{ svc.label }} · {{ k.project }}</div>
+      {% else %}
+      <div class="key-meta">{{ k.project }}</div>
+      {% endif %}
+    </div>
   </div>
-  <div class="key-actions">
-    <button type="button" class="btn btn-ghost" onclick="toggleShow('val-{{ k.id }}', this)">Show</button>
-    <button type="button" class="btn btn-ghost" onclick="copyToClipboard(document.getElementById('val-{{ k.id }}').value, this)">Copy</button>
-    <button type="button" class="btn btn-ghost" onclick="startEdit('{{ k.id }}')">Edit</button>
-    <form method="POST" action="/delete" style="margin:0;" onsubmit="event.preventDefault(); confirmDelete(this);">
-      <input type="hidden" name="id" value="{{ k.id }}" />
-      <button type="submit" class="btn btn-danger">Delete</button>
+
+  <div class="key-card-mid">
+    <input type="password" id="val-{{ k.id }}" value="{{ k.value }}" readonly class="key-val-input mono" tabindex="-1">
+  </div>
+
+  <div class="key-card-right">
+    <button type="button" class="btn-ghost action-btn" onclick="toggleShow('val-{{ k.id }}', this)">Show</button>
+    <button type="button" class="btn-ghost action-btn copy-btn" onclick="copyToClipboard(document.getElementById('val-{{ k.id }}').value, this)">Copy</button>
+    <button type="button" class="btn-ghost action-btn" onclick="startEdit('{{ k.id }}')">Edit</button>
+    <form method="POST" action="/delete" style="margin:0;" onsubmit="return confirm('Delete {{ k.name }}?')">
+      <input type="hidden" name="id" value="{{ k.id }}">
+      <button type="submit" class="btn-danger action-btn">✕</button>
     </form>
   </div>
 </div>
 
-{# Edit row — hidden by default #}
-<div class="key-row editing" id="edit-row-{{ k.id }}" style="display:none;">
+{# Inline edit row #}
+<div class="key-edit-row" id="edit-row-{{ k.id }}" style="display:none;">
   <form method="POST" action="/edit" class="edit-form">
-    <input type="hidden" name="id" value="{{ k.id }}" />
-    <div class="form-group">
-      <label>Project</label>
-      <input type="text" name="project" value="{{ k.project }}" class="monospace" />
+    <input type="hidden" name="id" value="{{ k.id }}">
+    <div>
+      <label class="edit-label">Project</label>
+      <input type="text" name="project" value="{{ k.project }}">
     </div>
-    <div class="form-group">
-      <label>Key Name</label>
-      <input type="text" name="name" value="{{ k.name }}" class="monospace" />
+    <div>
+      <label class="edit-label">Key Name</label>
+      <input type="text" name="name" value="{{ k.name }}" class="mono">
     </div>
-    <div class="form-group">
-      <label>Value</label>
-      <div class="value-input-wrap">
-        <input type="password" name="value" id="edit-val-{{ k.id }}" value="{{ k.value }}" class="monospace" />
-        <button type="button" class="btn btn-ghost" style="padding:7px 10px; font-size:12px;" onclick="toggleShow('edit-val-{{ k.id }}', this)">Show</button>
+    <div style="position:relative;">
+      <label class="edit-label">Value</label>
+      <div style="display:flex;gap:6px;">
+        <input type="password" name="value" id="edit-val-{{ k.id }}" value="{{ k.value }}" class="mono">
+        <button type="button" class="btn-ghost" style="flex-shrink:0;" onclick="toggleShow('edit-val-{{ k.id }}', this)">Show</button>
       </div>
     </div>
     <div class="edit-actions">
-      <button type="submit" class="btn btn-primary">Save</button>
-      <button type="button" class="btn btn-ghost" onclick="cancelEdit('{{ k.id }}')">Cancel</button>
+      <button type="submit" class="btn-primary">Save</button>
+      <button type="button" class="btn-ghost" onclick="cancelEdit('{{ k.id }}')">Cancel</button>
     </div>
   </form>
 </div>

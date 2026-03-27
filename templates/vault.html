@@ -1,465 +1,482 @@
 {% extends "base.html" %}
-
-{% block title %}API Wallet{% if current_project != 'all' %} — {{ current_project }}{% endif %}{% endblock %}
+{% block title %}API Wallet{% endblock %}
 
 {% block body %}
 <style>
-  /* ── Layout ── */
-  .app-wrap {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
+/* ── Ambient glow ── */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 500px;
+  background: radial-gradient(ellipse, rgba(124,58,237,0.055) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
 
-  /* ── Header ── */
-  .header {
-    align-items: center;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 12px;
-    padding: 0 24px;
-    height: 52px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+/* ── Layout ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; position: relative; z-index: 1; }
 
-  .header-logo {
-    color: var(--accent);
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.3px;
-    flex: 1;
-  }
+/* ── Header ── */
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px;
+  height: 50px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,8,0.85);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
 
-  .header-logo span {
-    color: var(--text-muted);
-    font-weight: 400;
-  }
+.hdr-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 0.95rem; font-weight: 800;
+  letter-spacing: -0.02em; color: var(--text);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
 
-  .key-count-badge {
-    background: var(--accent-dim);
-    border: 1px solid rgba(124, 58, 237, 0.3);
-    border-radius: 20px;
-    color: var(--accent);
-    font-size: 11px;
-    padding: 2px 10px;
-  }
+.hdr-logo .icon { font-size: 16px; }
 
-  .lock-btn {
-    color: var(--text-muted);
-    font-size: 12px;
-  }
+.hdr-logo .accent { color: var(--accent-hi); }
 
-  /* ── Project tabs ── */
-  .tabs-bar {
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 2px;
-    overflow-x: auto;
-    padding: 0 24px;
-    scrollbar-width: none;
-  }
+.hdr-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
 
-  .tabs-bar::-webkit-scrollbar { display: none; }
+/* Search */
+.hdr-search {
+  flex: 1;
+  max-width: 300px;
+  position: relative;
+}
 
-  .tab {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 13px;
-    padding: 10px 14px;
-    text-decoration: none;
-    transition: color 0.15s, border-color 0.15s;
-    white-space: nowrap;
-  }
+.hdr-search input {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 11px 6px 30px;
+  font-size: 13px;
+  height: 32px;
+}
 
-  .tab:hover {
-    background: transparent;
-    color: var(--text);
-    border-color: var(--border);
-  }
+.hdr-search input:focus { border-color: rgba(124,58,237,0.4); }
 
-  .tab.active {
-    border-bottom-color: var(--accent);
-    color: var(--accent);
-    background: transparent;
-  }
+.search-icon {
+  position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 12px; pointer-events: none;
+}
 
-  /* ── Main content ── */
-  .main {
-    flex: 1;
-    padding: 24px;
-    max-width: 960px;
-    margin: 0 auto;
-    width: 100%;
-  }
+.hdr-right { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
-  /* ── Add key section ── */
-  .add-section {
-    margin-bottom: 28px;
-  }
+.badge {
+  background: rgba(124,58,237,0.15);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 20px;
+  color: var(--accent-hi);
+  font-size: 11px;
+  padding: 2px 9px;
+  font-weight: 600;
+}
 
-  .section-toggle {
-    align-items: center;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    cursor: pointer;
-    display: flex;
-    font-size: 13px;
-    gap: 8px;
-    padding: 8px 14px;
-    margin-bottom: 0;
-    transition: all 0.15s;
-  }
+.hdr-btn {
+  height: 30px; padding: 0 12px; font-size: 12px; border-radius: 6px;
+}
 
-  .section-toggle:hover {
-    background: var(--bg-card);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
+.nav-btn {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-size: 12px; padding: 5px 12px; border-radius: 6px;
+}
 
-  .section-toggle .arrow {
-    font-size: 10px;
-    transition: transform 0.2s;
-  }
+.nav-btn:hover { background: var(--surface); color: var(--text); }
 
-  .section-toggle.open .arrow {
-    transform: rotate(180deg);
-  }
+.nav-btn.active { background: var(--surface-2); border-color: rgba(124,58,237,0.3); color: var(--accent-hi); }
 
-  .add-form-wrap {
-    display: none;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 var(--radius) var(--radius);
-    padding: 16px;
-  }
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: rgba(8,8,8,0.6);
+  flex-shrink: 0;
+}
 
-  .add-form-wrap.open {
-    display: block;
-  }
+.tabs::-webkit-scrollbar { display: none; }
 
-  .add-form {
-    display: grid;
-    gap: 12px;
-    grid-template-columns: 1fr 1fr 1fr auto;
-    align-items: end;
-  }
+.tab {
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  border-radius: 0; color: var(--muted); cursor: pointer; padding: 10px 14px;
+  font-size: 12.5px; font-weight: 500; white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
 
-  .add-form .form-group {
-    margin: 0;
-  }
+.tab:hover { background: transparent; color: var(--text); border-bottom-color: var(--border); }
 
-  .form-group label {
-    color: var(--text-muted);
-    display: block;
-    font-size: 11px;
-    letter-spacing: 0.05em;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-  }
+.tab.active { color: var(--accent-hi); border-bottom-color: var(--accent); }
 
-  .project-input-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
+.tab .cnt {
+  display: inline-block;
+  background: rgba(255,255,255,0.07);
+  border-radius: 10px;
+  font-size: 10px;
+  padding: 1px 6px;
+  margin-left: 5px;
+  color: var(--muted);
+}
 
-  .project-input-wrap select {
-    margin-bottom: 0;
-  }
+.tab.active .cnt { background: rgba(124,58,237,0.2); color: var(--accent-hi); }
 
-  .or-divider {
-    color: var(--text-muted);
-    font-size: 11px;
-    text-align: center;
-  }
+/* ── Content area ── */
+.content {
+  flex: 1; padding: 20px;
+  max-width: 900px; width: 100%; margin: 0 auto;
+}
 
-  .value-input-wrap {
-    position: relative;
-    display: flex;
-    gap: 6px;
-    align-items: center;
-  }
+/* ── Toolbar row ── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
 
-  .value-input-wrap input {
-    flex: 1;
-  }
+.toolbar-spacer { flex: 1; }
 
-  /* ── Keys grid ── */
-  .project-group {
-    margin-bottom: 32px;
-  }
+/* ── Add form panel ── */
+.add-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 20px;
+  display: none;
+}
 
-  .project-header {
-    align-items: center;
-    display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
+.add-panel.open { display: block; animation: slideDown 0.2s ease; }
 
-  .project-title {
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-  .project-count {
-    color: var(--text-muted);
-    font-size: 12px;
-  }
+.add-panel-title {
+  font-size: 0.78rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px;
+}
 
-  .project-export-btn {
-    margin-left: auto;
-    font-size: 12px;
-  }
+.add-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.6fr auto;
+  gap: 10px; align-items: end;
+}
 
-  .keys-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+.add-grid .f label, .field label {
+  display: block; font-size: 0.7rem; font-weight: 600;
+  color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+}
 
-  /* ── Key row ── */
-  .key-row {
-    align-items: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    display: grid;
-    gap: 10px;
-    grid-template-columns: 200px 1fr auto;
-    padding: 10px 14px;
-    transition: border-color 0.15s;
-  }
+.add-grid .f select, .add-grid .f input { height: 34px; }
 
-  .key-row:hover {
-    border-color: #3a3a3a;
-  }
+.new-proj-hint { font-size: 0.7rem; color: var(--muted-2); margin-top: 4px; }
 
-  .key-name {
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+/* Import panel */
+.import-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 20px;
+  display: none;
+}
 
-  .key-value-wrap {
-    align-items: center;
-    display: flex;
-    gap: 6px;
-    min-width: 0;
-  }
+.import-panel.open { display: block; animation: slideDown 0.2s ease; }
 
-  .key-value-wrap input {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    padding: 0;
-    width: 100%;
-  }
+.import-grid { display: grid; grid-template-columns: 1fr 180px 120px; gap: 10px; align-items: end; }
 
-  .key-value-wrap input:focus {
-    border: none;
-    outline: none;
-  }
+.import-grid textarea { height: 80px; resize: vertical; font-family: var(--mono); font-size: 12px; }
 
-  .key-actions {
-    align-items: center;
-    display: flex;
-    gap: 4px;
-  }
+/* ── Project section ── */
+.proj-section { margin-bottom: 28px; }
 
-  .key-actions button {
-    font-size: 12px;
-    padding: 4px 10px;
-  }
+.proj-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
 
-  /* ── Edit row ── */
-  .key-row.editing {
-    border-color: var(--accent);
-    grid-template-columns: 1fr;
-    padding: 14px;
-  }
+.proj-name {
+  font-size: 0.72rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
 
-  .edit-form {
-    display: grid;
-    gap: 10px;
-    grid-template-columns: 160px 1fr 1fr auto;
-    align-items: end;
-  }
+.proj-count { font-size: 0.72rem; color: var(--muted-2); }
 
-  .edit-form .form-group {
-    margin: 0;
-  }
+.proj-actions { margin-left: auto; display: flex; gap: 6px; }
 
-  .edit-actions {
-    display: flex;
-    gap: 6px;
-    align-items: flex-end;
-  }
+/* ── Key cards ── */
+.keys-list { display: flex; flex-direction: column; gap: 5px; }
 
-  /* ── Empty state ── */
-  .empty-state {
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    font-size: 13px;
-    padding: 48px 24px;
-    text-align: center;
-  }
+.key-card {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  transition: border-color 0.12s, background 0.12s;
+  position: relative;
+  overflow: hidden;
+}
 
-  .empty-state .empty-title {
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
+.key-card::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--svc-color, var(--accent));
+  border-radius: 8px 0 0 8px;
+  opacity: 0.6;
+}
 
-  /* ── Responsive ── */
-  @media (max-width: 700px) {
-    .add-form {
-      grid-template-columns: 1fr;
-    }
+.key-card:hover {
+  border-color: var(--border-hi);
+  background: var(--surface-2);
+}
 
-    .key-row {
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
+.key-card-left {
+  display: flex; align-items: center; gap: 11px; min-width: 0;
+}
 
-    .edit-form {
-      grid-template-columns: 1fr;
-    }
+.svc-badge {
+  width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+  background: var(--svc-bg, rgba(124,58,237,0.12));
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--svc-color, var(--accent));
+  font-size: 9.5px; font-weight: 800;
+  letter-spacing: 0.02em;
+  display: flex; align-items: center; justify-content: center;
+}
 
-    .main {
-      padding: 16px;
-    }
-  }
+.key-info { min-width: 0; }
+
+.key-name {
+  font-size: 12.5px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.key-meta { font-size: 11px; color: var(--muted-2); margin-top: 1px; }
+
+.key-card-mid {
+  flex: 1; max-width: 340px; min-width: 0;
+}
+
+.key-val-input {
+  background: transparent; border: none; border-radius: 0;
+  color: var(--muted); font-size: 12px; padding: 0;
+  letter-spacing: 0.04em; width: 100%;
+}
+
+.key-val-input:focus { box-shadow: none; border-color: transparent; }
+
+.key-card-right {
+  display: flex; align-items: center; gap: 3px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  padding: 5px 9px; font-size: 11.5px; border-radius: 5px; height: 28px;
+  color: var(--muted-2);
+}
+
+.action-btn:hover { color: var(--text); }
+
+.copy-btn:hover { color: var(--accent-hi) !important; }
+
+/* Inline edit row */
+.key-edit-row {
+  background: rgba(124,58,237,0.05);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 2px 0;
+}
+
+.edit-form {
+  display: grid;
+  grid-template-columns: 140px 1fr 1.5fr auto;
+  gap: 10px; align-items: end;
+}
+
+.edit-label {
+  display: block; font-size: 0.7rem; font-weight: 600;
+  color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
+}
+
+.edit-actions { display: flex; gap: 6px; padding-bottom: 1px; }
+
+/* ── Empty state ── */
+.empty {
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-icon { font-size: 2.5rem; margin-bottom: 14px; opacity: 0.4; }
+.empty-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty-sub { font-size: 0.85rem; }
+
+/* ── Auto-lock timer ── */
+.lock-timer {
+  font-size: 11px; color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Responsive ── */
+@media (max-width: 680px) {
+  .add-grid { grid-template-columns: 1fr; }
+  .edit-form { grid-template-columns: 1fr; }
+  .import-grid { grid-template-columns: 1fr; }
+  .key-card { grid-template-columns: 1fr; }
+  .key-card-mid { display: none; }
+}
 </style>
 
-<div class="app-wrap">
+<div class="app">
 
   <!-- Header -->
-  <header class="header">
-    <div class="header-logo">
-      &#128273; API Wallet
-      {% if current_project != 'all' %}
-        <span>/ {{ current_project }}</span>
-      {% endif %}
+  <header class="hdr">
+    <div class="hdr-logo">
+      <span class="icon">🔐</span>
+      <span>API <span class="accent">Wallet</span></span>
     </div>
-    <span class="key-count-badge">{{ all_keys|length }} key{{ 's' if all_keys|length != 1 else '' }}</span>
-    <form method="POST" action="/lock" style="margin:0;">
-      <button type="submit" class="btn btn-ghost lock-btn">Lock</button>
-    </form>
+
+    <div class="hdr-divider"></div>
+
+    <div class="hdr-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search keys…" autocomplete="off" oninput="filterKeys(this.value)">
+    </div>
+
+    <div class="hdr-right">
+      <span class="badge">{{ counts.all }} key{{ 's' if counts.all != 1 else '' }}</span>
+      <span class="lock-timer" id="lockTimer"></span>
+      <a href="/web3"><button class="nav-btn {% if request.path == '/web3' %}active{% endif %} hdr-btn">⬡ Web3</button></a>
+      <form method="POST" action="/lock" style="margin:0;">
+        <button type="submit" class="hdr-btn btn-danger" style="background:transparent;border:1px solid rgba(248,113,113,0.2);color:var(--muted);" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--muted)'">Lock</button>
+      </form>
+    </div>
   </header>
 
-  <!-- Project tabs -->
-  <nav class="tabs-bar">
-    <a href="/vault?project=all" class="tab {% if current_project == 'all' %}active{% endif %}">All</a>
+  <!-- Project Tabs -->
+  <nav class="tabs">
+    <button class="tab active" data-filter="all" onclick="setTab(this,'all')">
+      All <span class="cnt">{{ counts.all }}</span>
+    </button>
     {% for p in projects %}
-      <a href="/vault?project={{ p | urlencode }}" class="tab {% if current_project == p %}active{% endif %}">{{ p }}</a>
+    <button class="tab" data-filter="{{ p }}" onclick="setTab(this,'{{ p }}')">
+      {{ p }} <span class="cnt">{{ counts[p] }}</span>
+    </button>
     {% endfor %}
   </nav>
 
-  <!-- Main -->
-  <main class="main">
+  <!-- Content -->
+  <main class="content">
 
-    <!-- Add key section -->
-    <div class="add-section">
-      <button class="section-toggle" id="addToggleBtn" onclick="toggleAddForm()">
-        <span>+ Add Key</span>
-        <span class="arrow">&#9660;</span>
-      </button>
-      <div class="add-form-wrap" id="addFormWrap">
-        <form method="POST" action="/add" class="add-form">
-          <div class="form-group">
-            <label>Project</label>
-            <div class="project-input-wrap">
-              <select name="project" id="projectSelect">
-                <option value="">— existing —</option>
-                {% for p in projects %}
-                  <option value="{{ p }}" {% if current_project == p %}selected{% endif %}>{{ p }}</option>
-                {% endfor %}
-              </select>
-              <div class="or-divider">or new:</div>
-              <input type="text" name="new_project" placeholder="New project name" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Key Name</label>
-            <input type="text" name="name" placeholder="OPENAI_API_KEY" class="monospace" required />
-          </div>
-          <div class="form-group">
-            <label>Key Value</label>
-            <div class="value-input-wrap">
-              <input type="password" name="value" id="addValueInput" placeholder="sk-..." class="monospace" required />
-              <button type="button" class="btn btn-ghost" style="padding:7px 10px; font-size:12px;" onclick="toggleShow('addValueInput', this)">Show</button>
-            </div>
-          </div>
-          <div class="form-group" style="padding-bottom:1px;">
-            <button type="submit" class="btn btn-primary">Add</button>
-          </div>
-        </form>
-      </div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="nav-btn" onclick="togglePanel('addPanel', this)" id="addToggle">+ Add Key</button>
+      <button class="nav-btn" onclick="togglePanel('importPanel', this)" id="importToggle">⬆ Import .env</button>
+      <div class="toolbar-spacer"></div>
+      <button class="nav-btn" style="font-size:11px;" onclick="copyEnvExport('all', this)">Copy All as .env</button>
     </div>
 
-    <!-- Keys -->
-    {% if keys %}
-      {% if current_project == 'all' %}
-        <!-- Group by project -->
-        {% set seen = namespace(projects=[]) %}
-        {% for project_name in projects %}
-          {% set project_keys = keys | selectattr('project', 'equalto', project_name) | list %}
-          {% if project_keys %}
-          <div class="project-group">
-            <div class="project-header">
-              <span class="project-title">{{ project_name }}</span>
-              <span class="project-count">{{ project_keys|length }} key{{ 's' if project_keys|length != 1 else '' }}</span>
-              <button class="btn btn-ghost project-export-btn" onclick="copyEnvExport('{{ project_name }}', this)">Copy as .env</button>
-            </div>
-            <div class="keys-list">
-              {% for k in project_keys %}
-                {% include 'key_row.html' %}
+    <!-- Add Key Panel -->
+    <div class="add-panel" id="addPanel">
+      <div class="add-panel-title">Add New Key</div>
+      <form method="POST" action="/add">
+        <div class="add-grid">
+          <div class="f">
+            <label>Project</label>
+            <select name="project" id="projSelect" onchange="handleProjSelect(this)">
+              <option value="">Choose or type new ↓</option>
+              {% for p in projects %}
+              <option value="{{ p }}">{{ p }}</option>
               {% endfor %}
+            </select>
+            <input type="text" name="new_project" id="newProjInput" placeholder="Or type new project name…" style="margin-top:6px;display:none;">
+            <div class="new-proj-hint" id="newProjHint" style="display:none;">Leave project above blank to use this name</div>
+          </div>
+          <div class="f">
+            <label>Key Name</label>
+            <input type="text" name="name" class="mono" placeholder="OPENAI_API_KEY" required style="text-transform:uppercase;">
+          </div>
+          <div class="f">
+            <label>Key Value</label>
+            <div style="display:flex;gap:6px;">
+              <input type="password" name="value" id="addValInput" class="mono" placeholder="sk-..." required>
+              <button type="button" class="btn-ghost" style="flex-shrink:0;height:34px;" onclick="toggleShow('addValInput',this)">Show</button>
             </div>
           </div>
-          {% endif %}
-        {% endfor %}
-      {% else %}
-        <!-- Single project view -->
-        <div class="project-group">
-          <div class="project-header">
-            <span class="project-title">{{ current_project }}</span>
-            <span class="project-count">{{ keys|length }} key{{ 's' if keys|length != 1 else '' }}</span>
-            <button class="btn btn-ghost project-export-btn" onclick="copyEnvExport('{{ current_project }}', this)">Copy as .env</button>
+          <div style="padding-bottom:1px;">
+            <button type="submit" class="btn-primary" style="height:34px;padding:0 18px;">Add</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Import .env Panel -->
+    <div class="import-panel" id="importPanel">
+      <div class="add-panel-title">Import from .env</div>
+      <form method="POST" action="/import_env">
+        <div class="import-grid">
+          <div>
+            <label class="edit-label">Paste .env contents</label>
+            <textarea name="env_text" placeholder="OPENAI_API_KEY=sk-...&#10;ANTHROPIC_API_KEY=sk-ant-..." required></textarea>
+          </div>
+          <div>
+            <label class="edit-label">Assign to Project</label>
+            <select name="project">
+              <option value="Imported">Imported</option>
+              {% for p in projects %}
+              <option value="{{ p }}">{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div style="padding-bottom:1px;">
+            <button type="submit" class="btn-primary" style="width:100%;height:34px;">Import</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Keys by project -->
+    {% if keys %}
+      {% for p in projects %}
+        {% set pk = keys | selectattr('project','equalto',p) | list %}
+        {% if pk %}
+        <div class="proj-section" data-section="{{ p }}">
+          <div class="proj-header">
+            <span class="proj-name">{{ p }}</span>
+            <span class="proj-count">{{ pk|length }} key{{ 's' if pk|length != 1 else '' }}</span>
+            <div class="proj-actions">
+              <button class="nav-btn" style="font-size:11px;" onclick="copyEnvExport('{{ p }}', this)">Copy .env</button>
+            </div>
           </div>
           <div class="keys-list">
-            {% for k in keys %}
+            {% for k in pk %}
               {% include 'key_row.html' %}
             {% endfor %}
           </div>
         </div>
-      {% endif %}
+        {% endif %}
+      {% endfor %}
     {% else %}
-      <div class="empty-state">
-        <div class="empty-title">No keys yet</div>
-        <div>Add your first API key using the form above.</div>
+      <div class="empty">
+        <div class="empty-icon">🔑</div>
+        <div class="empty-title">Vault is empty</div>
+        <div class="empty-sub">Click "+ Add Key" above to add your first API key.</div>
       </div>
     {% endif %}
 
@@ -469,31 +486,128 @@
 
 {% block scripts %}
 <script>
-  function toggleAddForm() {
-    const wrap = document.getElementById('addFormWrap');
-    const btn = document.getElementById('addToggleBtn');
-    wrap.classList.toggle('open');
-    btn.classList.toggle('open');
+// ── Panel toggle ─────────────────────────────────────────────────────────────
+function togglePanel(id, btn) {
+  const panel = document.getElementById(id);
+  const open = panel.classList.toggle('open');
+  btn.style.background = open ? 'var(--surface-2)' : '';
+  btn.style.borderColor = open ? 'rgba(124,58,237,0.3)' : '';
+  btn.style.color = open ? 'var(--accent-hi)' : '';
+  if (open) {
+    const first = panel.querySelector('input,select,textarea');
+    if (first) setTimeout(() => first.focus(), 50);
   }
+}
 
-  function startEdit(id) {
-    const row = document.getElementById('row-' + id);
-    const editRow = document.getElementById('edit-row-' + id);
-    if (row) row.style.display = 'none';
-    if (editRow) editRow.style.display = 'grid';
-  }
+// ── Project select ────────────────────────────────────────────────────────────
+function handleProjSelect(sel) {
+  const newInput = document.getElementById('newProjInput');
+  const hint = document.getElementById('newProjHint');
+  const show = sel.value === '';
+  newInput.style.display = show ? '' : 'none';
+  hint.style.display = show ? '' : 'none';
+}
 
-  function cancelEdit(id) {
-    const row = document.getElementById('row-' + id);
-    const editRow = document.getElementById('edit-row-' + id);
-    if (row) row.style.display = 'grid';
-    if (editRow) editRow.style.display = 'none';
-  }
+// ── Tab filter (pure JS, no reload) ──────────────────────────────────────────
+let currentTab = 'all';
 
-  function confirmDelete(form) {
-    if (confirm('Delete this key? This cannot be undone.')) {
-      form.submit();
+function setTab(btn, project) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  currentTab = project;
+  applyFilter(document.getElementById('searchInput').value);
+}
+
+// ── Search filter ─────────────────────────────────────────────────────────────
+function filterKeys(query) { applyFilter(query); }
+
+function applyFilter(query) {
+  const q = query.toLowerCase();
+  let anyVisible = false;
+
+  document.querySelectorAll('.proj-section').forEach(section => {
+    const sectionProject = section.dataset.section;
+    const tabMatch = currentTab === 'all' || sectionProject === currentTab;
+
+    let sectionHasVisible = false;
+    section.querySelectorAll('.key-card').forEach(card => {
+      const name = (card.dataset.name || '').toLowerCase();
+      const project = (card.dataset.project || '').toLowerCase();
+      const searchMatch = !q || name.includes(q) || project.includes(q);
+      const visible = tabMatch && searchMatch;
+      card.style.display = visible ? '' : 'none';
+
+      // Also hide paired edit row
+      const id = card.id.replace('row-', '');
+      const editRow = document.getElementById('edit-row-' + id);
+      if (editRow && !visible) editRow.style.display = 'none';
+
+      if (visible) { sectionHasVisible = true; anyVisible = true; }
+    });
+
+    section.style.display = sectionHasVisible ? '' : 'none';
+  });
+}
+
+// ── Edit row toggle ──────────────────────────────────────────────────────────
+function startEdit(id) {
+  document.getElementById('row-' + id).style.display = 'none';
+  document.getElementById('edit-row-' + id).style.display = 'block';
+  const inp = document.querySelector('#edit-row-' + id + ' input[name="name"]');
+  if (inp) inp.focus();
+}
+
+function cancelEdit(id) {
+  document.getElementById('row-' + id).style.display = '';
+  document.getElementById('edit-row-' + id).style.display = 'none';
+}
+
+// ── Auto-lock timer (15 min) ─────────────────────────────────────────────────
+(function() {
+  const MINS = 15;
+  let remaining = MINS * 60;
+  const timerEl = document.getElementById('lockTimer');
+  let resetTimer;
+
+  function tick() {
+    remaining--;
+    if (remaining <= 0) {
+      document.querySelector('form[action="/lock"]').submit();
+      return;
+    }
+    if (remaining <= 120) {
+      const m = Math.floor(remaining / 60);
+      const s = String(remaining % 60).padStart(2,'0');
+      timerEl.textContent = `Auto-lock ${m}:${s}`;
+      timerEl.style.color = remaining <= 60 ? 'var(--red)' : 'var(--muted-2)';
+    } else {
+      timerEl.textContent = '';
     }
   }
+
+  function resetCountdown() {
+    remaining = MINS * 60;
+    timerEl.textContent = '';
+    timerEl.style.color = '';
+  }
+
+  setInterval(tick, 1000);
+  ['click','keydown','mousemove'].forEach(e => document.addEventListener(e, resetCountdown, {passive: true}));
+})();
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // / or Cmd+K → focus search
+  if ((e.key === '/' || (e.key === 'k' && e.metaKey)) && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+  // Escape → blur search
+  if (e.key === 'Escape') {
+    document.getElementById('searchInput').blur();
+    document.getElementById('searchInput').value = '';
+    applyFilter('');
+  }
+});
 </script>
 {% endblock %}

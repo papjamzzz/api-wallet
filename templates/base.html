@@ -6,141 +6,123 @@
   <title>{% block title %}API Wallet{% endblock %}</title>
   <style>
     :root {
-      --bg: #0d0d0d;
-      --bg-card: #1a1a1a;
-      --bg-card-hover: #1f1f1f;
-      --border: #2a2a2a;
-      --border-focus: #7c3aed;
-      --text: #f0f0f0;
-      --text-muted: #888;
-      --accent: #7c3aed;
-      --accent-hover: #6d28d9;
-      --accent-dim: rgba(124, 58, 237, 0.15);
-      --danger: #dc2626;
-      --danger-hover: #b91c1c;
-      --success: #16a34a;
-      --radius: 8px;
-      --radius-sm: 4px;
+      --bg:           #080808;
+      --surface:      rgba(255,255,255,0.03);
+      --surface-2:    rgba(255,255,255,0.055);
+      --border:       rgba(255,255,255,0.07);
+      --border-hi:    rgba(255,255,255,0.13);
+      --text:         #f1f5f9;
+      --muted:        #64748b;
+      --muted-2:      #475569;
+      --accent:       #7c3aed;
+      --accent-glow:  rgba(124,58,237,0.25);
+      --accent-hi:    #a78bfa;
+      --green:        #4ade80;
+      --red:          #f87171;
+      --radius:       10px;
+      --radius-sm:    6px;
+      --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      --mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+      font-family: var(--font);
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.6;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    a:hover {
-      color: var(--accent-hover);
-    }
+    a { color: var(--accent-hi); text-decoration: none; }
+    a:hover { color: var(--text); }
 
     input, select, textarea {
-      background: var(--bg);
+      background: rgba(255,255,255,0.05);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text);
-      font-family: inherit;
+      font-family: var(--font);
       font-size: 13px;
       outline: none;
-      padding: 8px 10px;
-      transition: border-color 0.15s;
+      padding: 8px 11px;
+      transition: border-color 0.15s, box-shadow 0.15s;
       width: 100%;
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: var(--border-focus);
+      border-color: rgba(124,58,237,0.5);
+      box-shadow: 0 0 0 3px var(--accent-glow);
     }
 
-    input[type="password"], input[type="text"].key-value {
-      font-family: 'Courier New', monospace;
-      letter-spacing: 0.05em;
-    }
-
-    button, .btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
+    button {
       cursor: pointer;
-      font-family: inherit;
+      font-family: var(--font);
       font-size: 13px;
-      padding: 7px 14px;
-      transition: background 0.15s, border-color 0.15s;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      padding: 7px 13px;
+      transition: all 0.15s;
       white-space: nowrap;
     }
 
-    button:hover, .btn:hover {
-      background: var(--bg-card-hover);
-      border-color: #3a3a3a;
+    button:hover {
+      background: var(--surface-2);
+      border-color: var(--border-hi);
+      color: var(--text);
     }
 
     .btn-primary {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
+      font-weight: 600;
     }
 
     .btn-primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
+      background: #6d28d9;
+      border-color: #6d28d9;
+      box-shadow: 0 0 12px var(--accent-glow);
     }
 
     .btn-danger {
+      color: var(--red);
       background: transparent;
-      border-color: var(--border);
-      color: var(--danger);
+      border-color: transparent;
     }
 
     .btn-danger:hover {
-      background: rgba(220, 38, 38, 0.1);
-      border-color: var(--danger);
+      background: rgba(248,113,113,0.1);
+      border-color: rgba(248,113,113,0.3);
     }
 
     .btn-ghost {
       background: transparent;
       border-color: transparent;
-      color: var(--text-muted);
+      color: var(--muted);
     }
 
     .btn-ghost:hover {
-      background: var(--bg-card);
+      background: var(--surface);
       border-color: var(--border);
       color: var(--text);
     }
 
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-    }
+    .mono { font-family: var(--mono); }
+    .muted { color: var(--muted); }
 
-    .error-msg {
-      background: rgba(220, 38, 38, 0.1);
-      border: 1px solid rgba(220, 38, 38, 0.3);
-      border-radius: var(--radius-sm);
-      color: #f87171;
-      font-size: 13px;
-      margin-top: 12px;
-      padding: 10px 14px;
-    }
-
-    .monospace {
-      font-family: 'Courier New', Courier, monospace;
-    }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
   </style>
 </head>
 <body>
@@ -148,55 +130,33 @@
 
   <script>
     function copyToClipboard(value, btn) {
+      const orig = btn.innerHTML;
       navigator.clipboard.writeText(value).then(() => {
-        const orig = btn.textContent;
-        btn.textContent = 'Copied!';
-        btn.style.color = '#4ade80';
-        setTimeout(() => {
-          btn.textContent = orig;
-          btn.style.color = '';
-        }, 1500);
+        btn.innerHTML = '✓ Copied';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1600);
       }).catch(() => {
-        // fallback
         const ta = document.createElement('textarea');
-        ta.value = value;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        const orig = btn.textContent;
-        btn.textContent = 'Copied!';
-        btn.style.color = '#4ade80';
-        setTimeout(() => {
-          btn.textContent = orig;
-          btn.style.color = '';
-        }, 1500);
+        ta.value = value; ta.style.cssText = 'position:fixed;opacity:0;';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        btn.innerHTML = '✓ Copied'; btn.style.color = 'var(--green)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1600);
       });
-    }
-
-    function toggleShow(inputId, btn) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = 'Hide';
-      } else {
-        input.type = 'password';
-        btn.textContent = 'Show';
-      }
     }
 
     function copyEnvExport(project, btn) {
       fetch('/export/' + encodeURIComponent(project))
-        .then(r => r.text())
-        .then(text => {
-          copyToClipboard(text, btn);
-        });
+        .then(r => r.text()).then(t => copyToClipboard(t, btn));
+    }
+
+    function toggleShow(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? 'Show' : 'Hide';
     }
   </script>
-
   {% block scripts %}{% endblock %}
 </body>
 </html>
