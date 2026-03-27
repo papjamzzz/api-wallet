@@ -1,0 +1,42 @@
+{# Normal display row #}
+<div class="key-row" id="row-{{ k.id }}" style="display:grid;">
+  <div class="key-name">{{ k.name }}</div>
+  <div class="key-value-wrap">
+    <input type="password" id="val-{{ k.id }}" value="{{ k.value }}" readonly class="monospace" />
+  </div>
+  <div class="key-actions">
+    <button type="button" class="btn btn-ghost" onclick="toggleShow('val-{{ k.id }}', this)">Show</button>
+    <button type="button" class="btn btn-ghost" onclick="copyToClipboard(document.getElementById('val-{{ k.id }}').value, this)">Copy</button>
+    <button type="button" class="btn btn-ghost" onclick="startEdit('{{ k.id }}')">Edit</button>
+    <form method="POST" action="/delete" style="margin:0;" onsubmit="event.preventDefault(); confirmDelete(this);">
+      <input type="hidden" name="id" value="{{ k.id }}" />
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+{# Edit row — hidden by default #}
+<div class="key-row editing" id="edit-row-{{ k.id }}" style="display:none;">
+  <form method="POST" action="/edit" class="edit-form">
+    <input type="hidden" name="id" value="{{ k.id }}" />
+    <div class="form-group">
+      <label>Project</label>
+      <input type="text" name="project" value="{{ k.project }}" class="monospace" />
+    </div>
+    <div class="form-group">
+      <label>Key Name</label>
+      <input type="text" name="name" value="{{ k.name }}" class="monospace" />
+    </div>
+    <div class="form-group">
+      <label>Value</label>
+      <div class="value-input-wrap">
+        <input type="password" name="value" id="edit-val-{{ k.id }}" value="{{ k.value }}" class="monospace" />
+        <button type="button" class="btn btn-ghost" style="padding:7px 10px; font-size:12px;" onclick="toggleShow('edit-val-{{ k.id }}', this)">Show</button>
+      </div>
+    </div>
+    <div class="edit-actions">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button type="button" class="btn btn-ghost" onclick="cancelEdit('{{ k.id }}')">Cancel</button>
+    </div>
+  </form>
+</div>

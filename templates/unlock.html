@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'setup' %}Create Vault{% else %}Unlock Vault{% endif %} — API Wallet{% endblock %}
+
+{% block body %}
+<style>
+  .unlock-wrap {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .unlock-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    max-width: 400px;
+    padding: 40px 36px;
+    width: 100%;
+  }
+
+  .unlock-logo {
+    color: var(--accent);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .unlock-logo span {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 400;
+  }
+
+  .unlock-subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-group label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .unlock-btn {
+    margin-top: 20px;
+    width: 100%;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .setup-note {
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    text-align: center;
+    line-height: 1.7;
+  }
+</style>
+
+<div class="unlock-wrap">
+  <div class="unlock-card">
+    <div class="unlock-logo">
+      &#128273; API Wallet
+    </div>
+
+    {% if mode == 'setup' %}
+      <div class="unlock-subtitle">Create your master password to initialize the vault</div>
+      <form method="POST" action="/setup">
+        <div class="form-group">
+          <label>Master Password</label>
+          <input type="password" name="password" placeholder="Enter a strong password" autofocus required />
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm" placeholder="Confirm password" required />
+        </div>
+        {% if error %}
+          <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary unlock-btn">Create Vault</button>
+      </form>
+      <div class="setup-note">
+        Your password is never stored.<br>
+        Keys are encrypted with Fernet + PBKDF2HMAC.<br>
+        Vault lives at <code>~/.api_wallet/vault.enc</code>
+      </div>
+    {% else %}
+      <div class="unlock-subtitle">Enter your master password to unlock</div>
+      <form method="POST" action="/unlock">
+        <div class="form-group">
+          <label>Master Password</label>
+          <input type="password" name="password" placeholder="Master password" autofocus required />
+        </div>
+        {% if error %}
+          <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary unlock-btn">Unlock Vault</button>
+      </form>
+      <div class="setup-note">
+        Password is never stored — used only to derive the encryption key.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}API Wallet{% if current_project != 'all' %} — {{ current_project }}{% endif %}{% endblock %}
+
+{% block body %}
+<style>
+  /* ── Layout ── */
+  .app-wrap {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    align-items: center;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    padding: 0 24px;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    flex: 1;
+  }
+
+  .header-logo span {
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .key-count-badge {
+    background: var(--accent-dim);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 20px;
+    color: var(--accent);
+    font-size: 11px;
+    padding: 2px 10px;
+  }
+
+  .lock-btn {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  /* ── Project tabs ── */
+  .tabs-bar {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    padding: 0 24px;
+    scrollbar-width: none;
+  }
+
+  .tabs-bar::-webkit-scrollbar { display: none; }
+
+  .tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 10px 14px;
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab:hover {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .tab.active {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+    background: transparent;
+  }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    padding: 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* ── Add key section ── */
+  .add-section {
+    margin-bottom: 28px;
+  }
+
+  .section-toggle {
+    align-items: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    font-size: 13px;
+    gap: 8px;
+    padding: 8px 14px;
+    margin-bottom: 0;
+    transition: all 0.15s;
+  }
+
+  .section-toggle:hover {
+    background: var(--bg-card);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .section-toggle .arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+  }
+
+  .section-toggle.open .arrow {
+    transform: rotate(180deg);
+  }
+
+  .add-form-wrap {
+    display: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 16px;
+  }
+
+  .add-form-wrap.open {
+    display: block;
+  }
+
+  .add-form {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: end;
+  }
+
+  .add-form .form-group {
+    margin: 0;
+  }
+
+  .form-group label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+
+  .project-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .project-input-wrap select {
+    margin-bottom: 0;
+  }
+
+  .or-divider {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .value-input-wrap {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .value-input-wrap input {
+    flex: 1;
+  }
+
+  /* ── Keys grid ── */
+  .project-group {
+    margin-bottom: 32px;
+  }
+
+  .project-header {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .project-title {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .project-count {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .project-export-btn {
+    margin-left: auto;
+    font-size: 12px;
+  }
+
+  .keys-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* ── Key row ── */
+  .key-row {
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 200px 1fr auto;
+    padding: 10px 14px;
+    transition: border-color 0.15s;
+  }
+
+  .key-row:hover {
+    border-color: #3a3a3a;
+  }
+
+  .key-name {
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .key-value-wrap {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .key-value-wrap input {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 0;
+    width: 100%;
+  }
+
+  .key-value-wrap input:focus {
+    border: none;
+    outline: none;
+  }
+
+  .key-actions {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+  }
+
+  .key-actions button {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  /* ── Edit row ── */
+  .key-row.editing {
+    border-color: var(--accent);
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .edit-form {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 160px 1fr 1fr auto;
+    align-items: end;
+  }
+
+  .edit-form .form-group {
+    margin: 0;
+  }
+
+  .edit-actions {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .empty-state .empty-title {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .add-form {
+      grid-template-columns: 1fr;
+    }
+
+    .key-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .edit-form {
+      grid-template-columns: 1fr;
+    }
+
+    .main {
+      padding: 16px;
+    }
+  }
+</style>
+
+<div class="app-wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">
+      &#128273; API Wallet
+      {% if current_project != 'all' %}
+        <span>/ {{ current_project }}</span>
+      {% endif %}
+    </div>
+    <span class="key-count-badge">{{ all_keys|length }} key{{ 's' if all_keys|length != 1 else '' }}</span>
+    <form method="POST" action="/lock" style="margin:0;">
+      <button type="submit" class="btn btn-ghost lock-btn">Lock</button>
+    </form>
+  </header>
+
+  <!-- Project tabs -->
+  <nav class="tabs-bar">
+    <a href="/vault?project=all" class="tab {% if current_project == 'all' %}active{% endif %}">All</a>
+    {% for p in projects %}
+      <a href="/vault?project={{ p | urlencode }}" class="tab {% if current_project == p %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Add key section -->
+    <div class="add-section">
+      <button class="section-toggle" id="addToggleBtn" onclick="toggleAddForm()">
+        <span>+ Add Key</span>
+        <span class="arrow">&#9660;</span>
+      </button>
+      <div class="add-form-wrap" id="addFormWrap">
+        <form method="POST" action="/add" class="add-form">
+          <div class="form-group">
+            <label>Project</label>
+            <div class="project-input-wrap">
+              <select name="project" id="projectSelect">
+                <option value="">— existing —</option>
+                {% for p in projects %}
+                  <option value="{{ p }}" {% if current_project == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+              </select>
+              <div class="or-divider">or new:</div>
+              <input type="text" name="new_project" placeholder="New project name" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Key Name</label>
+            <input type="text" name="name" placeholder="OPENAI_API_KEY" class="monospace" required />
+          </div>
+          <div class="form-group">
+            <label>Key Value</label>
+            <div class="value-input-wrap">
+              <input type="password" name="value" id="addValueInput" placeholder="sk-..." class="monospace" required />
+              <button type="button" class="btn btn-ghost" style="padding:7px 10px; font-size:12px;" onclick="toggleShow('addValueInput', this)">Show</button>
+            </div>
+          </div>
+          <div class="form-group" style="padding-bottom:1px;">
+            <button type="submit" class="btn btn-primary">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Keys -->
+    {% if keys %}
+      {% if current_project == 'all' %}
+        <!-- Group by project -->
+        {% set seen = namespace(projects=[]) %}
+        {% for project_name in projects %}
+          {% set project_keys = keys | selectattr('project', 'equalto', project_name) | list %}
+          {% if project_keys %}
+          <div class="project-group">
+            <div class="project-header">
+              <span class="project-title">{{ project_name }}</span>
+              <span class="project-count">{{ project_keys|length }} key{{ 's' if project_keys|length != 1 else '' }}</span>
+              <button class="btn btn-ghost project-export-btn" onclick="copyEnvExport('{{ project_name }}', this)">Copy as .env</button>
+            </div>
+            <div class="keys-list">
+              {% for k in project_keys %}
+                {% include 'key_row.html' %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <!-- Single project view -->
+        <div class="project-group">
+          <div class="project-header">
+            <span class="project-title">{{ current_project }}</span>
+            <span class="project-count">{{ keys|length }} key{{ 's' if keys|length != 1 else '' }}</span>
+            <button class="btn btn-ghost project-export-btn" onclick="copyEnvExport('{{ current_project }}', this)">Copy as .env</button>
+          </div>
+          <div class="keys-list">
+            {% for k in keys %}
+              {% include 'key_row.html' %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-title">No keys yet</div>
+        <div>Add your first API key using the form above.</div>
+      </div>
+    {% endif %}
+
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleAddForm() {
+    const wrap = document.getElementById('addFormWrap');
+    const btn = document.getElementById('addToggleBtn');
+    wrap.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+
+  function startEdit(id) {
+    const row = document.getElementById('row-' + id);
+    const editRow = document.getElementById('edit-row-' + id);
+    if (row) row.style.display = 'none';
+    if (editRow) editRow.style.display = 'grid';
+  }
+
+  function cancelEdit(id) {
+    const row = document.getElementById('row-' + id);
+    const editRow = document.getElementById('edit-row-' + id);
+    if (row) row.style.display = 'grid';
+    if (editRow) editRow.style.display = 'none';
+  }
+
+  function confirmDelete(form) {
+    if (confirm('Delete this key? This cannot be undone.')) {
+      form.submit();
+    }
+  }
+</script>
+{% endblock %}
